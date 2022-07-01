@@ -1,8 +1,9 @@
 package database
 
 import (
-	"fmt"
+	"log"
 
+	"github.com/Sortren/event-log/src/models"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )
@@ -10,6 +11,10 @@ import (
 var (
 	DBConn *gorm.DB
 )
+
+func migrations() {
+	DBConn.AutoMigrate(new(models.Event))
+}
 
 func InitDatabaseConn() {
 	// TODO: move credentials to .env, change host to service name before deployment
@@ -19,8 +24,9 @@ func InitDatabaseConn() {
 	DBConn, err = gorm.Open(postgres.Open(dsn), &gorm.Config{})
 
 	if err != nil {
-		panic("Database connection failed")
+		log.Fatal("Database connection failed")
 	}
-	fmt.Println("Database connection successful")
+	log.Print("Database connection successful")
 
+	migrations()
 }
