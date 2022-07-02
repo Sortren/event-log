@@ -8,3 +8,16 @@ services:
       - ./.env
     ports:
       - "5432:5432"
+
+  event-log:
+    container_name: event-log
+    build:
+      context: .
+      dockerfile: ./Dockerfile
+    env_file:
+      - ./.env
+    command: "./bin/server"
+    ports:
+      - "3000:3000"
+    depends_on:
+      - db
