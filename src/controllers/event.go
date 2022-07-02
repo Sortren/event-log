@@ -1,42 +1,47 @@
 package controllers
 
 import (
-	"log"
-
-	"github.com/Sortren/event-log/src/database"
 	"github.com/Sortren/event-log/src/models"
-	"github.com/go-playground/validator"
+	"github.com/Sortren/event-log/src/services"
 	"github.com/gofiber/fiber/v2"
 )
 
 func EventController(api fiber.Router) {
 	eventGroup := api.Group("/event")
 
-	eventGroup.Get("/", GetEvents)
-	eventGroup.Post("/", CreateEvent)
-}
+	eventGroup.Post("/", func(c *fiber.Ctx) error {
+		event := new(models.Event)
 
-func GetEvents(c *fiber.Ctx) error {
-	return c.SendString("Getting an event")
-}
+		if err := c.BodyParser(event); err != nil {
+			return fiber.ErrBadRequest
+		}
 
-func CreateEvent(c *fiber.Ctx) error {
-	db := database.DBConn
+		event, err := services.CreateEvent(event)
 
-	event := new(models.Event)
+		if err != nil {
+			return fiber.ErrBadRequest
+		}
 
-	if err := c.BodyParser(event); err != nil {
-		return err
-	}
+		return c.JSON(event)
+	})
 
-	validate := validator.New()
-	if err := validate.Struct(event); err != nil {
-		return err
-	}
+	eventGroup.Get("/", func(c *fiber.Ctx) error {
+		if string(c.Request().URI().QueryString()) == "" {
+			return fiber.ErrBadRequest
+		}
 
-	db.Create(&event)
+		filters := map[string]string{
+			"start": c.Query("start"),
+			"end":   c.Query("end"),
+			"type":  c.Query("type"),
+		}
 
-	log.Printf("Event[%s] (%s) added to the database", event.Type, event.Description)
+		events, err := services.GetEvents(filters)
 
-	return c.JSON(event)
+		if err != nil {
+			return err
+		}
+
+		return c.JSON(events)
+	})
 }
