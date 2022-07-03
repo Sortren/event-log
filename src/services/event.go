@@ -14,36 +14,50 @@ type EventService interface {
 	CreateEvent(event *models.Event) (*models.Event, error)
 }
 
-func GetEvents(filters map[string]string) ([]map[string]interface{}, error) {
+func GetEvents(filters map[string]interface{}) ([]map[string]interface{}, error) {
 	db := database.DBConn
 
-	start := filters["start"]
-	end := filters["end"]
-	eventType := filters["type"]
+	start := filters["Start"]
+	end := filters["End"]
+	eventType := filters["Type"]
+
+	limit, ok := filters["Limit"].(int)
+
+	if !ok {
+		return nil, fiber.NewError(fiber.StatusBadRequest, "Wrong limit queryparam")
+	}
+
+	offset, ok := filters["Offset"].(int)
+
+	if !ok {
+		return nil, fiber.NewError(fiber.StatusBadRequest, "Wrong offset queryparam")
+	}
 
 	isStartFilterPresent := start != ""
 	isEndFilterPresent := end != ""
 	isTypeFilterPresent := eventType != ""
 
-	// Providing start without end or end without start resolves Bad Request
 	if isStartFilterPresent != isEndFilterPresent {
-		return nil, fiber.ErrBadRequest
+		return nil, fiber.NewError(fiber.StatusBadRequest, "Can't provide start without end and end without start")
 	}
 
-	var err error
 	var events []map[string]interface{}
 
 	if isTypeFilterPresent && (isStartFilterPresent && isEndFilterPresent) {
-		db.Model(&models.Event{}).Where("type = ? AND created_at BETWEEN ? AND ?", eventType, start, end).Find(&events)
+		db.Model(&models.Event{}).Where("type = ? AND created_at BETWEEN ? AND ?", eventType, start, end).Order("created_at DESC").Limit(limit).Offset(offset).Find(&events)
 
 	} else if isStartFilterPresent && isEndFilterPresent {
-		db.Model(&models.Event{}).Where("created_at BETWEEN ? AND ?", start, end).Find(&events)
+		db.Model(&models.Event{}).Where("created_at BETWEEN ? AND ?", start, end).Order("created_at DESC").Limit(limit).Offset(offset).Find(&events)
 
 	} else if isTypeFilterPresent {
-		db.Model(&models.Event{}).Where("type = ?", eventType).Find(&events)
+		db.Model(&models.Event{}).Where("type = ?", eventType).Order("created_at DESC").Limit(limit).Offset(offset).Find(&events)
+
+	} else {
+		db.Model(&models.Event{}).Order("created_at DESC").Limit(limit).Offset(offset).Find(&events)
+
 	}
 
-	return events, err
+	return events, nil
 }
 
 func CreateEvent(event *models.Event) (*models.Event, error) {
@@ -58,7 +72,5 @@ func CreateEvent(event *models.Event) (*models.Event, error) {
 
 	log.Printf("Event[%s] (%s) added to the database", event.Type, event.Description)
 
-	var err error
-
-	return event, err
+	return event, nil
 }

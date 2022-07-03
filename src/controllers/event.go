@@ -6,6 +6,7 @@ import (
 	_ "github.com/Sortren/event-log/src/docs"
 	"github.com/Sortren/event-log/src/models"
 	"github.com/Sortren/event-log/src/services"
+	"github.com/fatih/structs"
 	"github.com/gofiber/fiber/v2"
 )
 
@@ -32,7 +33,7 @@ func (ctr *RestEventController) CreateEvent(c *fiber.Ctx) error {
 	event, err := services.CreateEvent(event)
 
 	if err != nil {
-		return fiber.ErrBadRequest
+		return err
 	}
 
 	return c.JSON(event)
@@ -46,21 +47,28 @@ func (ctr *RestEventController) CreateEvent(c *fiber.Ctx) error {
 // @Param        type   query      string  false  "Event type"
 // @Param        start  query      string  false  "Start date" Format(date)
 // @Param        end   	query      string  false  "End date" Format(date)
+// @Param        limit  query      int     false  "Limit"
+// @Param        offset query      int     false  "Offset"
 // @Success      200  {array}  models.Event
 // @Failure      400  {object}  fiber.Error
 // @Failure      404  {object}  fiber.Error
 // @Failure      500  {object}  fiber.Error
 // @Router       /events [get]
 func (ctr *RestEventController) GetEvents(c *fiber.Ctx) error {
-	if string(c.Request().URI().QueryString()) == "" {
-		return fiber.ErrBadRequest
+	type Params struct {
+		Type   string `query:"type"`
+		Start  string `query:"start"`
+		End    string `query:"end"`
+		Limit  int    `query:"limit,required"`
+		Offset int    `query:"offset,required"`
 	}
 
-	filters := map[string]string{
-		"start": c.Query("start"),
-		"end":   c.Query("end"),
-		"type":  c.Query("type"),
+	params := Params{}
+	if err := c.QueryParser(&params); err != nil {
+		return fiber.NewError(fiber.ErrBadRequest.Code, "Required fields are not provided in the queryparams")
 	}
+
+	filters := structs.Map(params)
 
 	events, err := services.GetEvents(filters)
 
