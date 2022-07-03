@@ -1,0 +1,107 @@
+definitions:
+  fiber.Error:
+    properties:
+      code:
+        type: integer
+      message:
+        type: string
+    type: object
+  gorm.DeletedAt:
+    properties:
+      time:
+        type: string
+      valid:
+        description: Valid is true if Time is not NULL
+        type: boolean
+    type: object
+  models.Event:
+    properties:
+      createdAt:
+        type: string
+      deletedAt:
+        $ref: '#/definitions/gorm.DeletedAt'
+      description:
+        type: string
+      id:
+        type: integer
+      type:
+        type: string
+      updatedAt:
+        type: string
+    required:
+    - description
+    - type
+    type: object
+info:
+  contact: {}
+paths:
+  /events:
+    get:
+      description: Get objects by query filters
+      parameters:
+      - description: Event type
+        in: query
+        name: type
+        required: true
+        type: string
+      - description: Start date
+        format: date
+        in: query
+        name: start
+        type: string
+      - description: End date
+        format: date
+        in: query
+        name: end
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/models.Event'
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/fiber.Error'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/fiber.Error'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/fiber.Error'
+      summary: Show list of filtered events
+      tags:
+      - events
+    post:
+      consumes:
+      - application/json
+      description: Create an event and save it to the database
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.Event'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/fiber.Error'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/fiber.Error'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/fiber.Error'
+      summary: Create an event
+      tags:
+      - event
+swagger: "2.0"

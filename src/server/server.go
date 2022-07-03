@@ -10,12 +10,6 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
-func RegisterRestControllers(app *fiber.App) {
-	api_v1 := app.Group("/api/v1")
-
-	controllers.RestEventController(api_v1)
-}
-
 type Server struct {
 	App *fiber.App
 }
@@ -28,7 +22,7 @@ func (s *Server) Setup() {
 	}
 	database.InitDatabaseConn()
 
-	RegisterRestControllers(s.App)
+	controllers.RegisterRestControllers(s.App)
 }
 
 func (s *Server) Start() <-chan os.Signal {
