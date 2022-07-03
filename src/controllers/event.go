@@ -6,7 +6,7 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
-func EventController(api fiber.Router) {
+func RestEventController(api fiber.Router) {
 	eventGroup := api.Group("/event")
 
 	eventGroup.Post("/", func(c *fiber.Ctx) error {

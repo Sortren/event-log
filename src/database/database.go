@@ -41,10 +41,10 @@ func InitDatabaseConn() {
 
 	if err != nil {
 		log.Fatal("Database connection failed, check the provided credentials")
-		os.Exit(1)
 	}
 
 	log.Print("Database connection successful")
 
 	migrations()
+	log.Print("Migrations went correctly")
 }

@@ -9,6 +9,11 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
+type EventService interface {
+	GetEvents(filters map[string]string) ([]map[string]interface{}, error)
+	CreateEvent(event *models.Event) (*models.Event, error)
+}
+
 func GetEvents(filters map[string]string) ([]map[string]interface{}, error) {
 	db := database.DBConn
 
@@ -25,8 +30,8 @@ func GetEvents(filters map[string]string) ([]map[string]interface{}, error) {
 		return nil, fiber.ErrBadRequest
 	}
 
-	var events []map[string]interface{}
 	var err error
+	var events []map[string]interface{}
 
 	if isTypeFilterPresent && (isStartFilterPresent && isEndFilterPresent) {
 		db.Model(&models.Event{}).Where("type = ? AND created_at BETWEEN ? AND ?", eventType, start, end).Find(&events)

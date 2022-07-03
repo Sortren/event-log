@@ -1,22 +1,22 @@
 package main
 
 import (
-	"github.com/Sortren/event-log/src/controllers"
-	"github.com/Sortren/event-log/src/database"
-	"github.com/gofiber/fiber/v2"
+	"log"
+	"os"
+
+	"github.com/Sortren/event-log/src/config"
+	"github.com/Sortren/event-log/src/server"
 )
 
-func registerControllers(api fiber.Router) {
-	controllers.EventController(api)
-}
-
 func main() {
-	database.InitDatabaseConn()
+	server := &server.Server{
+		App: config.InitializeFiberApp(),
+	}
 
-	app := fiber.New()
-	api_v1 := app.Group("/api/v1")
+	signal := server.Start()
 
-	registerControllers(api_v1)
+	<-signal
 
-	app.Listen(":3000")
+	log.Print("Shutting down the server")
+	os.Exit(0)
 }
