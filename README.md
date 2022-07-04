@@ -69,5 +69,10 @@ You can easily check what is the expected request body or what are the expected 
 ![image](https://user-images.githubusercontent.com/79079000/177061563-a82ccb08-a007-4f1b-9714-34c0f6b51c92.png)
 ![image](https://user-images.githubusercontent.com/79079000/177061567-5f90c25a-f964-4032-b8ba-a224aa8152ec.png)
 
+---
+
+### Tests
+
+If you want to test the REST API Layer, I have added the postman collection that includes every defined endpoint with sample data.
 
 ---
