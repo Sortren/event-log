@@ -7,6 +7,7 @@ import (
 	"github.com/Sortren/event-log/src/models"
 	"github.com/Sortren/event-log/src/services"
 	"github.com/Sortren/event-log/src/utils"
+	"github.com/go-playground/validator"
 	"github.com/gofiber/fiber/v2"
 )
 
@@ -34,6 +35,11 @@ func (ctr *RestEventController) CreateEvent(c *fiber.Ctx) error {
 
 	if err := c.BodyParser(event); err != nil {
 		return fiber.ErrBadRequest
+	}
+
+	validate := validator.New()
+	if err := validate.Struct(event); err != nil {
+		return err
 	}
 
 	event, err := ctr.IEventService.CreateEvent(event)

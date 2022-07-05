@@ -6,7 +6,6 @@ import (
 	"github.com/Sortren/event-log/src/database"
 	"github.com/Sortren/event-log/src/models"
 	"github.com/Sortren/event-log/src/utils"
-	"github.com/go-playground/validator"
 )
 
 type IEventService interface {
@@ -35,11 +34,6 @@ func (e *EventService) GetEvents(start string, end string, eventType string, lim
 
 func (e *EventService) CreateEvent(event *models.Event) (*models.Event, error) {
 	db := database.DBConn
-
-	validate := validator.New()
-	if err := validate.Struct(event); err != nil {
-		return nil, err
-	}
 
 	db.Create(&event)
 
