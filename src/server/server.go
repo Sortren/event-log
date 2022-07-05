@@ -27,6 +27,7 @@ func (s *Server) Setup() {
 
 func (s *Server) Start() <-chan os.Signal {
 	s.Setup()
+	database.MakeAutoMigrations()
 
 	exitSignal := make(chan os.Signal, 1)
 

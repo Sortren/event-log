@@ -14,12 +14,16 @@ var (
 	DBConn *gorm.DB
 )
 
-func migrations() {
-	DBConn.AutoMigrate(new(models.Event))
+func MakeAutoMigrations() {
+	err := DBConn.AutoMigrate(new(models.Event))
+
+	if err != nil {
+		log.Fatal("Can't auto migrate the database")
+	}
+	log.Print("Auto migrations went correctly")
 }
 
 func InitDatabaseConn() {
-
 	POSTGRES_DB := os.Getenv("POSTGRES_DB")
 	POSTGRES_USER := os.Getenv("POSTGRES_USER")
 	POSTGRES_PASSWORD := os.Getenv("POSTGRES_PASSWORD")
@@ -44,7 +48,4 @@ func InitDatabaseConn() {
 	}
 
 	log.Print("Database connection successful")
-
-	migrations()
-	log.Print("Migrations went correctly")
 }
