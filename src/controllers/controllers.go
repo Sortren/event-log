@@ -2,6 +2,7 @@ package controllers
 
 import (
 	_ "github.com/Sortren/event-log/src/docs"
+	"github.com/Sortren/event-log/src/services"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/swagger"
 )
@@ -17,7 +18,7 @@ func RegisterRestControllers(app *fiber.App) {
 	api_v1 := app.Group("/api/v1")
 
 	events := api_v1.Group("/events")
-	restEventController := &RestEventController{}
+	restEventController := NewRestEventController(&services.EventService{})
 	{
 		events.Post("/", restEventController.CreateEvent)
 		events.Get("/", restEventController.GetEvents)
@@ -27,5 +28,4 @@ func RegisterRestControllers(app *fiber.App) {
 	{
 		docs.Get("/*", swagger.HandlerDefault)
 	}
-
 }

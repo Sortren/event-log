@@ -6,11 +6,17 @@ import (
 	_ "github.com/Sortren/event-log/src/docs"
 	"github.com/Sortren/event-log/src/models"
 	"github.com/Sortren/event-log/src/services"
-	"github.com/fatih/structs"
+	"github.com/Sortren/event-log/src/utils"
 	"github.com/gofiber/fiber/v2"
 )
 
-type RestEventController struct{}
+type RestEventController struct {
+	services.IEventService
+}
+
+func NewRestEventController(service services.IEventService) *RestEventController {
+	return &RestEventController{IEventService: service}
+}
 
 // CreateEvent godoc
 // @Summary      Create an event
@@ -30,7 +36,7 @@ func (ctr *RestEventController) CreateEvent(c *fiber.Ctx) error {
 		return fiber.ErrBadRequest
 	}
 
-	event, err := services.CreateEvent(event)
+	event, err := ctr.IEventService.CreateEvent(event)
 
 	if err != nil {
 		return err
@@ -55,7 +61,7 @@ func (ctr *RestEventController) CreateEvent(c *fiber.Ctx) error {
 // @Failure      500  {object}  fiber.Error
 // @Router       /events [get]
 func (ctr *RestEventController) GetEvents(c *fiber.Ctx) error {
-	type Params struct {
+	type EventParams struct {
 		Type   string `query:"type"`
 		Start  string `query:"start"`
 		End    string `query:"end"`
@@ -63,14 +69,16 @@ func (ctr *RestEventController) GetEvents(c *fiber.Ctx) error {
 		Offset int    `query:"offset,required"`
 	}
 
-	params := Params{}
-	if err := c.QueryParser(&params); err != nil {
-		return fiber.NewError(fiber.ErrBadRequest.Code, "Required fields are not provided in the queryparams")
+	filters := &EventParams{}
+	if err := c.QueryParser(filters); err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, "Required fields are not provided in the queryparams")
 	}
 
-	filters := structs.Map(params)
+	if utils.IsFilterPresent(filters.Start) != utils.IsFilterPresent(filters.End) {
+		return fiber.NewError(fiber.StatusBadRequest, "Can't provide start without end and end without start")
+	}
 
-	events, err := services.GetEvents(filters)
+	events, err := ctr.IEventService.GetEvents(filters.Start, filters.End, filters.Type, filters.Limit, filters.Offset)
 
 	if err != nil {
 		return err
