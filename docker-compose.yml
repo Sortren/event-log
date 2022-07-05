@@ -16,7 +16,7 @@ services:
       dockerfile: ./Dockerfile
     env_file:
       - ./.env
-    command: "./bin/server"
+    command: "/bin/server"
     ports:
       - "3000:3000"
     depends_on:
