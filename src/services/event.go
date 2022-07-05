@@ -14,7 +14,7 @@ type EventService interface {
 	CreateEvent(event *models.Event) (*models.Event, error)
 }
 
-func GetEvents(filters map[string]interface{}) ([]map[string]interface{}, error) {
+func GetEvents(filters map[string]interface{}) ([]models.Event, error) {
 	db := database.DBConn
 
 	start := filters["Start"]
@@ -41,20 +41,15 @@ func GetEvents(filters map[string]interface{}) ([]map[string]interface{}, error)
 		return nil, fiber.NewError(fiber.StatusBadRequest, "Can't provide start without end and end without start")
 	}
 
-	var events []map[string]interface{}
+	var events []models.Event
 
-	if isTypeFilterPresent && (isStartFilterPresent && isEndFilterPresent) {
-		db.Model(&models.Event{}).Where("type = ? AND created_at BETWEEN ? AND ?", eventType, start, end).Order("created_at DESC").Limit(limit).Offset(offset).Find(&events)
+	db.Order("created_at DESC").Limit(limit).Offset(offset).Find(&events)
 
-	} else if isStartFilterPresent && isEndFilterPresent {
-		db.Model(&models.Event{}).Where("created_at BETWEEN ? AND ?", start, end).Order("created_at DESC").Limit(limit).Offset(offset).Find(&events)
-
-	} else if isTypeFilterPresent {
-		db.Model(&models.Event{}).Where("type = ?", eventType).Order("created_at DESC").Limit(limit).Offset(offset).Find(&events)
-
-	} else {
-		db.Model(&models.Event{}).Order("created_at DESC").Limit(limit).Offset(offset).Find(&events)
-
+	if isTypeFilterPresent {
+		db.Where("type = ?", eventType)
+	}
+	if isStartFilterPresent && isEndFilterPresent {
+		db.Where("created_at BETWEEN ? AND ?", start, end)
 	}
 
 	return events, nil
