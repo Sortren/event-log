@@ -20,14 +20,14 @@ func (e *EventService) GetEvents(start string, end string, eventType string, lim
 
 	var events []models.Event
 
-	db.Order("created_at DESC").Limit(limit).Offset(offset).Find(&events)
-
 	if utils.IsFilterPresent(eventType) {
-		db.Where("type = ?", eventType)
+		db = db.Where("type = ?", eventType)
 	}
 	if utils.IsFilterPresent(start) && utils.IsFilterPresent(end) {
-		db.Where("created_at BETWEEN ? AND ?", start, end)
+		db = db.Where("created_at BETWEEN ? AND ?", start, end)
 	}
+
+	db.Order("created_at DESC").Limit(limit).Offset(offset).Find(&events)
 
 	return events, nil
 }

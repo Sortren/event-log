@@ -80,6 +80,10 @@ func (ctr *RestEventController) GetEvents(c *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusBadRequest, "Required fields are not provided in the queryparams")
 	}
 
+	if filters.Limit < 0 || filters.Offset < 0 {
+		return fiber.NewError(fiber.StatusBadRequest, "Limit and Offset can't be negative")
+	}
+
 	if utils.IsFilterPresent(filters.Start) != utils.IsFilterPresent(filters.End) {
 		return fiber.NewError(fiber.StatusBadRequest, "Can't provide start without end and end without start")
 	}

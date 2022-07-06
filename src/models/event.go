@@ -1,10 +1,10 @@
 package models
 
-import "gorm.io/gorm"
+import "time"
 
 type Event struct {
-	gorm.Model
-
-	Description string `json:"description" validate:"required"`
-	Type        string `json:"type" validate:"required"`
+	ID          uint      `gorm:"primary_key"`
+	CreatedAt   time.Time `json:"created_at"`
+	Description string    `json:"description" validate:"required"`
+	Type        string    `json:"type" validate:"required"`
 }
