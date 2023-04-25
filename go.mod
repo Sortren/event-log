@@ -1,6 +1,6 @@
 module github.com/Sortren/event-log
 
-go 1.18
+go 1.20
 
 require (
 	github.com/go-playground/validator v9.31.0+incompatible
