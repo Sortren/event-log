@@ -3,7 +3,6 @@ module github.com/Sortren/event-log
 go 1.18
 
 require (
-	github.com/fatih/structs v1.1.0
 	github.com/go-playground/validator v9.31.0+incompatible
 	github.com/gofiber/fiber/v2 v2.34.1
 	github.com/gofiber/swagger v0.0.1

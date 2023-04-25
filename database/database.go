@@ -5,7 +5,7 @@ import (
 	"log"
 	"os"
 
-	"github.com/Sortren/event-log/src/models"
+	"github.com/Sortren/event-log/models"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )

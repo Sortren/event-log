@@ -3,10 +3,10 @@ package controllers
 import (
 	_ "net/http/httputil"
 
-	_ "github.com/Sortren/event-log/src/docs"
-	"github.com/Sortren/event-log/src/models"
-	"github.com/Sortren/event-log/src/services"
-	"github.com/Sortren/event-log/src/utils"
+	_ "github.com/Sortren/event-log/docs"
+	"github.com/Sortren/event-log/models"
+	"github.com/Sortren/event-log/services"
+	"github.com/Sortren/event-log/utils"
 	"github.com/go-playground/validator"
 	"github.com/gofiber/fiber/v2"
 )

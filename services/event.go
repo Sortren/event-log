@@ -3,9 +3,9 @@ package services
 import (
 	"log"
 
-	"github.com/Sortren/event-log/src/database"
-	"github.com/Sortren/event-log/src/events"
-	"github.com/Sortren/event-log/src/models"
+	"github.com/Sortren/event-log/database"
+	"github.com/Sortren/event-log/events"
+	"github.com/Sortren/event-log/models"
 )
 
 type IEventService interface {

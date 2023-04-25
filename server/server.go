@@ -5,8 +5,8 @@ import (
 	"os"
 	"os/signal"
 
-	"github.com/Sortren/event-log/src/controllers"
-	"github.com/Sortren/event-log/src/database"
+	"github.com/Sortren/event-log/controllers"
+	"github.com/Sortren/event-log/database"
 	"github.com/gofiber/fiber/v2"
 )
 

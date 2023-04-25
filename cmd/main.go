@@ -4,8 +4,8 @@ import (
 	"log"
 	"os"
 
-	"github.com/Sortren/event-log/src/config"
-	"github.com/Sortren/event-log/src/server"
+	"github.com/Sortren/event-log/config"
+	"github.com/Sortren/event-log/server"
 )
 
 func main() {

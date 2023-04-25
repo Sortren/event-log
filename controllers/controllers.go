@@ -3,10 +3,10 @@ package controllers
 import (
 	"fmt"
 
-	"github.com/Sortren/event-log/src/database"
-	_ "github.com/Sortren/event-log/src/docs"
-	"github.com/Sortren/event-log/src/events"
-	"github.com/Sortren/event-log/src/services"
+	"github.com/Sortren/event-log/database"
+	_ "github.com/Sortren/event-log/docs"
+	"github.com/Sortren/event-log/events"
+	"github.com/Sortren/event-log/services"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/swagger"
 )
