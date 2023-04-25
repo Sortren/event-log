@@ -1,29 +1,20 @@
 package database
 
 import (
+	"errors"
 	"fmt"
 	"log"
 	"os"
 
-	"github.com/Sortren/event-log/models"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )
 
 var (
-	DBConn *gorm.DB
+	db *gorm.DB
 )
 
-func MakeAutoMigrations() {
-	err := DBConn.AutoMigrate(new(models.Event))
-
-	if err != nil {
-		log.Fatal("Can't auto migrate the database")
-	}
-	log.Print("Auto migrations went correctly")
-}
-
-func InitDatabaseConn() {
+func InitDatabase() error {
 	POSTGRES_DB := os.Getenv("POSTGRES_DB")
 	POSTGRES_USER := os.Getenv("POSTGRES_USER")
 	POSTGRES_PASSWORD := os.Getenv("POSTGRES_PASSWORD")
@@ -41,11 +32,25 @@ func InitDatabaseConn() {
 		TIMEZONE)
 
 	var err error
-	DBConn, err = gorm.Open(postgres.Open(dsn), &gorm.Config{})
+	db, err = gorm.Open(postgres.Open(dsn), &gorm.Config{})
 
 	if err != nil {
-		log.Fatal("Database connection failed, check the provided credentials")
+		return fmt.Errorf("database connection failed, err: %w", err)
 	}
 
-	log.Print("Database connection successful")
+	log.Print("database connection successful")
+
+	if err := migrate(); err != nil {
+		return fmt.Errorf("can't run auto migrations based on models, err: %w", err)
+	}
+	log.Print("auto migrations went successfully")
+
+	return nil
+}
+
+func GetConnection() (*gorm.DB, error) {
+	if db == nil {
+		return nil, errors.New("database connection has not been initialized")
+	}
+	return db, nil
 }

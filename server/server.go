@@ -15,19 +15,19 @@ type Server struct {
 }
 
 func (s *Server) Setup() {
-	// All middlewares and controllers will be registered here
-
 	if s.App == nil {
-		log.Fatal("Can't setup the server")
+		log.Fatal("can't setup the server")
 	}
-	database.InitDatabaseConn()
+
+	if err := database.InitDatabase(); err != nil {
+		log.Fatalf("can't initialize database, err: %v", err)
+	}
 
 	controllers.RegisterRestControllers(s.App)
 }
 
 func (s *Server) Start() <-chan os.Signal {
 	s.Setup()
-	database.MakeAutoMigrations()
 
 	exitSignal := make(chan os.Signal, 1)
 
