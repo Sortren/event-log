@@ -12,11 +12,11 @@ import (
 )
 
 type RestEventController struct {
-	services.IEventService
+	eventService services.IEventService
 }
 
 func NewRestEventController(service services.IEventService) *RestEventController {
-	return &RestEventController{IEventService: service}
+	return &RestEventController{eventService: service}
 }
 
 // CreateEvent godoc
@@ -42,7 +42,7 @@ func (ctr *RestEventController) CreateEvent(c *fiber.Ctx) error {
 		return err
 	}
 
-	event, err := ctr.IEventService.CreateEvent(event)
+	event, err := ctr.eventService.CreateEvent(event)
 
 	if err != nil {
 		return err
@@ -88,7 +88,7 @@ func (ctr *RestEventController) GetEvents(c *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusBadRequest, "Can't provide start without end and end without start")
 	}
 
-	events, err := ctr.IEventService.GetEvents(filters.Start, filters.End, filters.Type, filters.Limit, filters.Offset)
+	events, err := ctr.eventService.GetEvents(filters.Start, filters.End, filters.Type, filters.Limit, filters.Offset)
 
 	if err != nil {
 		return err

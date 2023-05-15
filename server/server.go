@@ -19,7 +19,7 @@ func (s *Server) Setup() {
 		log.Fatal("can't setup the server")
 	}
 
-	if err := database.InitDatabase(); err != nil {
+	if err := database.Connect(); err != nil {
 		log.Fatalf("can't initialize database, err: %v", err)
 	}
 

@@ -1,56 +1,18 @@
 package database
 
 import (
-	"errors"
+	"database/sql"
 	"fmt"
-	"log"
-	"os"
-
-	"gorm.io/driver/postgres"
-	"gorm.io/gorm"
+	"github.com/Sortren/event-log/pkg/config"
+	"github.com/uptrace/bun"
+	"github.com/uptrace/bun/dialect/pgdialect"
 )
 
-var (
-	db *gorm.DB
-)
-
-func InitDatabase() error {
-	POSTGRES_DB := os.Getenv("POSTGRES_DB")
-	POSTGRES_USER := os.Getenv("POSTGRES_USER")
-	POSTGRES_PASSWORD := os.Getenv("POSTGRES_PASSWORD")
-	POSTGRES_PORT := os.Getenv("POSTGRES_PORT")
-	POSTGRES_HOST := os.Getenv("POSTGRES_HOST")
-	SSL_MODE := os.Getenv("SSL_MODE")
-	TIMEZONE := os.Getenv("TIMEZONE")
-
-	dsn := fmt.Sprintf("host=%s user=%s password=%s dbname=%s port=%s sslmode=%s TimeZone=%s",
-		POSTGRES_HOST,
-		POSTGRES_USER,
-		POSTGRES_PASSWORD,
-		POSTGRES_DB, POSTGRES_PORT,
-		SSL_MODE,
-		TIMEZONE)
-
-	var err error
-	db, err = gorm.Open(postgres.Open(dsn), &gorm.Config{})
-
+func Connect(cfg config.Postgres) (*bun.DB, error) {
+	sqldb, err := sql.Open("pg", cfg.Dsn())
 	if err != nil {
-		return fmt.Errorf("database connection failed, err: %w", err)
+		return nil, fmt.Errorf("can't open database connection, err: %w", err)
 	}
 
-	log.Print("database connection successful")
-
-	if err := migrate(); err != nil {
-		return fmt.Errorf("can't run auto migrations based on models, err: %w", err)
-	}
-	log.Print("auto migrations went successfully")
-
-	return nil
-}
-
-func GetConnection() (*gorm.DB, error) {
-	if db == nil {
-		return nil, errors.New("database connection has not been initialized")
-	}
-	return db, nil
+	return bun.NewDB(sqldb, pgdialect.New()), nil
 }
