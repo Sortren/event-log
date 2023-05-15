@@ -11,6 +11,7 @@ import (
 	"log"
 )
 
+// RegisterRestControllers godoc
 // @title Event Logger Service API
 // @version 1.0
 // @description HTTP Service that allows saving and getting logs to/from database"

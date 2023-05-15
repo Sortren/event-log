@@ -2,11 +2,11 @@ package controllers
 
 import (
 	_ "net/http/httputil"
+	"time"
 
 	_ "github.com/Sortren/event-log/docs"
 	"github.com/Sortren/event-log/models"
 	"github.com/Sortren/event-log/services"
-	"github.com/Sortren/event-log/utils"
 	"github.com/go-playground/validator"
 	"github.com/gofiber/fiber/v2"
 )
@@ -68,11 +68,11 @@ func (ctr *RestEventController) CreateEvent(c *fiber.Ctx) error {
 // @Router       /events [get]
 func (ctr *RestEventController) GetEvents(c *fiber.Ctx) error {
 	type EventParams struct {
-		Type   string `query:"type"`
-		Start  string `query:"start"`
-		End    string `query:"end"`
-		Limit  int    `query:"limit,required"`
-		Offset int    `query:"offset,required"`
+		Type   string    `query:"type"`
+		Start  time.Time `query:"start"`
+		End    time.Time `query:"end"`
+		Limit  int       `query:"limit,required"`
+		Offset int       `query:"offset,required"`
 	}
 
 	filters := &EventParams{}
@@ -84,14 +84,17 @@ func (ctr *RestEventController) GetEvents(c *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusBadRequest, "Limit and Offset can't be negative")
 	}
 
-	if utils.IsFilterPresent(filters.Start) != utils.IsFilterPresent(filters.End) {
-		return fiber.NewError(fiber.StatusBadRequest, "Can't provide start without end and end without start")
-	}
-
-	events, err := ctr.eventService.GetEvents(filters.Start, filters.End, filters.Type, filters.Limit, filters.Offset)
+	events, err := ctr.eventService.GetEvents(
+		c.Context(),
+		filters.Start,
+		filters.End,
+		filters.Type,
+		filters.Limit,
+		filters.Offset,
+	)
 
 	if err != nil {
-		return err
+		return fiber.NewError(fiber.StatusInternalServerError, "Can't get events")
 	}
 
 	return c.JSON(events)
