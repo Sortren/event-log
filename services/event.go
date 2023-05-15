@@ -2,13 +2,12 @@ package services
 
 import (
 	"fmt"
-	"github.com/Sortren/event-log/events"
 	"github.com/Sortren/event-log/models"
 	"github.com/Sortren/event-log/pkg/persistence"
 )
 
 type IEventService interface {
-	GetEvents(start string, end string, eventType string, limit int, offset int) ([]events.Event, error)
+	GetEvents(start string, end string, eventType string, limit int, offset int) ([]models.Event, error)
 	CreateEvent(event *models.Event) (*models.Event, error)
 }
 
@@ -24,7 +23,7 @@ func NewEventService(repo persistence.IRepository[models.Event]) *EventService {
 	}
 }
 
-func (e *EventService) GetEvents(start string, end string, eventType string, limit int, offset int) ([]events.Event, error) {
+func (e *EventService) GetEvents(start string, end string, eventType string, limit int, offset int) ([]models.Event, error) {
 	fmt.Println("success get events tmp")
 
 	return nil, nil
