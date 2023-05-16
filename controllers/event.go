@@ -1,22 +1,30 @@
 package controllers
 
 import (
+	"fmt"
 	_ "net/http/httputil"
+	"time"
 
 	_ "github.com/Sortren/event-log/docs"
 	"github.com/Sortren/event-log/models"
 	"github.com/Sortren/event-log/services"
-	"github.com/Sortren/event-log/utils"
 	"github.com/go-playground/validator"
 	"github.com/gofiber/fiber/v2"
 )
 
 type RestEventController struct {
-	services.IEventService
+	eventService services.IEventService
 }
 
 func NewRestEventController(service services.IEventService) *RestEventController {
-	return &RestEventController{IEventService: service}
+	return &RestEventController{eventService: service}
+}
+
+func (c *RestEventController) RegisterRoutes(router fiber.Router) {
+	eventsGroup := router.Group("/events")
+
+	eventsGroup.Post("/", c.CreateEvent)
+	eventsGroup.Get("/", c.GetEvents)
 }
 
 // CreateEvent godoc
@@ -30,25 +38,47 @@ func NewRestEventController(service services.IEventService) *RestEventController
 // @Failure      404  {object}  fiber.Error
 // @Failure      500  {object}  fiber.Error
 // @Router       /events [post]
-func (ctr *RestEventController) CreateEvent(c *fiber.Ctx) error {
+func (c *RestEventController) CreateEvent(ctx *fiber.Ctx) error {
 	event := new(models.Event)
 
-	if err := c.BodyParser(event); err != nil {
-		return fiber.ErrBadRequest
+	if err := ctx.BodyParser(event); err != nil {
+		msg := &ErrorMessage{
+			Message: "can't bind request body",
+			Details: fmt.Sprintf("%s", err),
+		}
+
+		return ctx.
+			Status(fiber.StatusBadRequest).
+			JSON(msg)
 	}
 
-	validate := validator.New()
-	if err := validate.Struct(event); err != nil {
-		return err
+	if err := validator.New().Struct(event); err != nil {
+		msg := &ErrorMessage{
+			Message: "can't validate request body",
+			Details: fmt.Sprintf("%s", err),
+		}
+
+		return ctx.
+			Status(fiber.StatusBadRequest).
+			JSON(msg)
 	}
 
-	event, err := ctr.IEventService.CreateEvent(event)
+	event, err := c.eventService.CreateEvent(ctx.Context(), event)
 
 	if err != nil {
-		return err
+		msg := &ErrorMessage{
+			Message: "can't create event",
+			Details: fmt.Sprintf("%s", err),
+		}
+
+		return ctx.
+			Status(fiber.StatusInternalServerError).
+			JSON(msg)
 	}
 
-	return c.JSON(event)
+	return ctx.
+		Status(fiber.StatusCreated).
+		JSON(event)
 }
 
 // GetEvents godoc
@@ -66,33 +96,61 @@ func (ctr *RestEventController) CreateEvent(c *fiber.Ctx) error {
 // @Failure      404  {object}  fiber.Error
 // @Failure      500  {object}  fiber.Error
 // @Router       /events [get]
-func (ctr *RestEventController) GetEvents(c *fiber.Ctx) error {
+func (c *RestEventController) GetEvents(ctx *fiber.Ctx) error {
 	type EventParams struct {
-		Type   string `query:"type"`
-		Start  string `query:"start"`
-		End    string `query:"end"`
-		Limit  int    `query:"limit,required"`
-		Offset int    `query:"offset,required"`
+		Type   string    `query:"type"`
+		Start  time.Time `query:"start"`
+		End    time.Time `query:"end"`
+		Limit  int       `query:"limit,required" validate:"gt=0"`
+		Offset int       `query:"offset,required" validate:"gte=0"`
 	}
 
 	filters := &EventParams{}
-	if err := c.QueryParser(filters); err != nil {
-		return fiber.NewError(fiber.StatusBadRequest, "Required fields are not provided in the queryparams")
+
+	if err := ctx.QueryParser(filters); err != nil {
+		msg := &ErrorMessage{
+			Message: "required fields are not provided in the queryparams",
+			Details: fmt.Sprintf("%s", err),
+		}
+
+		return ctx.
+			Status(fiber.StatusBadRequest).
+			JSON(msg)
 	}
 
-	if filters.Limit < 0 || filters.Offset < 0 {
-		return fiber.NewError(fiber.StatusBadRequest, "Limit and Offset can't be negative")
+	if err := validator.New().Struct(filters); err != nil {
+		msg := &ErrorMessage{
+			Message: "can't validate queryparams, limit and offset can't be negative",
+			Details: fmt.Sprintf("%s", err),
+		}
+
+		return ctx.
+			Status(fiber.StatusBadRequest).
+			JSON(msg)
 	}
 
-	if utils.IsFilterPresent(filters.Start) != utils.IsFilterPresent(filters.End) {
-		return fiber.NewError(fiber.StatusBadRequest, "Can't provide start without end and end without start")
-	}
+	events, err := c.eventService.GetEvents(
+		ctx.Context(),
+		filters.Start,
+		filters.End,
+		filters.Type,
+		filters.Limit,
+		filters.Offset,
+	)
 
-	events, err := ctr.IEventService.GetEvents(filters.Start, filters.End, filters.Type, filters.Limit, filters.Offset)
+	if len(events) == 0 {
+		msg := ErrorMessage{Message: "events with provided params not found"}
+		return ctx.
+			Status(fiber.StatusNotFound).
+			JSON(msg)
+	}
 
 	if err != nil {
-		return err
+		msg := ErrorMessage{Message: "can't get events"}
+		return ctx.
+			Status(fiber.StatusInternalServerError).
+			JSON(msg)
 	}
 
-	return c.JSON(events)
+	return ctx.JSON(events)
 }

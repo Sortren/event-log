@@ -1,12 +1,16 @@
 package server
 
 import (
+	"github.com/Sortren/event-log/database"
+	"github.com/Sortren/event-log/pkg/config"
+	"github.com/Sortren/event-log/pkg/persistence"
+	"github.com/Sortren/event-log/services"
+	"github.com/gofiber/swagger"
 	"log"
 	"os"
 	"os/signal"
 
 	"github.com/Sortren/event-log/controllers"
-	"github.com/Sortren/event-log/database"
 	"github.com/gofiber/fiber/v2"
 )
 
@@ -15,19 +19,35 @@ type Server struct {
 }
 
 func (s *Server) Setup() {
-	// All middlewares and controllers will be registered here
-
 	if s.App == nil {
-		log.Fatal("Can't setup the server")
+		log.Fatal("can't setup the server")
 	}
-	database.InitDatabaseConn()
 
-	controllers.RegisterRestControllers(s.App)
+	postgresConfig := config.NewPostgres()
+
+	db, err := database.Connect(postgresConfig)
+	if err != nil {
+		log.Fatalf("can't get db connection, err: %v", err)
+	}
+
+	eventRepo := persistence.NewEvent(db)
+	eventService := services.NewEventService(eventRepo)
+
+	restControllers := []controllers.RestController{
+		controllers.NewRestEventController(eventService),
+	}
+
+	v1 := s.App.Group("/api/v1")
+	for _, controller := range restControllers {
+		controller.RegisterRoutes(v1)
+	}
+
+	docs := v1.Group("/docs")
+	docs.Get("/*", swagger.HandlerDefault)
 }
 
 func (s *Server) Start() <-chan os.Signal {
 	s.Setup()
-	database.MakeAutoMigrations()
 
 	exitSignal := make(chan os.Signal, 1)
 

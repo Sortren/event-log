@@ -1,51 +1,26 @@
 package database
 
 import (
+	"database/sql"
 	"fmt"
-	"log"
-	"os"
-
-	"github.com/Sortren/event-log/models"
-	"gorm.io/driver/postgres"
-	"gorm.io/gorm"
+	"github.com/Sortren/event-log/pkg/config"
+	"github.com/uptrace/bun"
+	"github.com/uptrace/bun/dialect/pgdialect"
+	_ "github.com/uptrace/bun/driver/pgdriver"
+	"github.com/uptrace/bun/extra/bundebug"
 )
 
-var (
-	DBConn *gorm.DB
-)
-
-func MakeAutoMigrations() {
-	err := DBConn.AutoMigrate(new(models.Event))
-
+func Connect(cfg config.Postgres) (*bun.DB, error) {
+	sqldb, err := sql.Open("pg", cfg.Dsn())
 	if err != nil {
-		log.Fatal("Can't auto migrate the database")
-	}
-	log.Print("Auto migrations went correctly")
-}
-
-func InitDatabaseConn() {
-	POSTGRES_DB := os.Getenv("POSTGRES_DB")
-	POSTGRES_USER := os.Getenv("POSTGRES_USER")
-	POSTGRES_PASSWORD := os.Getenv("POSTGRES_PASSWORD")
-	POSTGRES_PORT := os.Getenv("POSTGRES_PORT")
-	POSTGRES_HOST := os.Getenv("POSTGRES_HOST")
-	SSL_MODE := os.Getenv("SSL_MODE")
-	TIMEZONE := os.Getenv("TIMEZONE")
-
-	dsn := fmt.Sprintf("host=%s user=%s password=%s dbname=%s port=%s sslmode=%s TimeZone=%s",
-		POSTGRES_HOST,
-		POSTGRES_USER,
-		POSTGRES_PASSWORD,
-		POSTGRES_DB, POSTGRES_PORT,
-		SSL_MODE,
-		TIMEZONE)
-
-	var err error
-	DBConn, err = gorm.Open(postgres.Open(dsn), &gorm.Config{})
-
-	if err != nil {
-		log.Fatal("Database connection failed, check the provided credentials")
+		return nil, fmt.Errorf("can't open database connection, err: %w", err)
 	}
 
-	log.Print("Database connection successful")
+	db := bun.NewDB(sqldb, pgdialect.New())
+
+	if cfg.DebugMode() {
+		db.AddQueryHook(bundebug.NewQueryHook(bundebug.WithVerbose(true)))
+	}
+
+	return db, nil
 }

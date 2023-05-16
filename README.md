@@ -25,6 +25,13 @@ run docker-compose with a build switch
 docker-compose up -d --build
 ```
 
+run migrations
+
+```
+goose postgres "user=sortren password=sortren123 dbname=main sslmode=disable" up
+```
+(same credentials as in .env file)
+
 ---
 
 ### General service information

@@ -4,16 +4,16 @@ import (
 	"log"
 	"os"
 
-	"github.com/Sortren/event-log/config"
+	"github.com/Sortren/event-log/pkg/config"
 	"github.com/Sortren/event-log/server"
 )
 
 func main() {
-	server := &server.Server{
+	srv := &server.Server{
 		App: config.InitializeFiberApp(),
 	}
 
-	signal := server.Start()
+	signal := srv.Start()
 
 	<-signal
 
