@@ -1,12 +1,16 @@
 package server
 
 import (
+	"github.com/Sortren/event-log/database"
+	"github.com/Sortren/event-log/pkg/config"
+	"github.com/Sortren/event-log/pkg/persistence"
+	"github.com/Sortren/event-log/services"
+	"github.com/gofiber/swagger"
 	"log"
 	"os"
 	"os/signal"
 
 	"github.com/Sortren/event-log/controllers"
-	"github.com/Sortren/event-log/database"
 	"github.com/gofiber/fiber/v2"
 )
 
@@ -19,11 +23,27 @@ func (s *Server) Setup() {
 		log.Fatal("can't setup the server")
 	}
 
-	if err := database.Connect(); err != nil {
-		log.Fatalf("can't initialize database, err: %v", err)
+	postgresConfig := config.NewPostgres()
+
+	db, err := database.Connect(postgresConfig)
+	if err != nil {
+		log.Fatalf("can't get db connection, err: %v", err)
 	}
 
-	controllers.RegisterRestControllers(s.App)
+	eventRepo := persistence.NewEvent(db)
+	eventService := services.NewEventService(eventRepo)
+
+	restControllers := []controllers.RestController{
+		controllers.NewRestEventController(eventService),
+	}
+
+	v1 := s.App.Group("/api/v1")
+	for _, controller := range restControllers {
+		controller.RegisterRoutes(v1)
+	}
+
+	docs := v1.Group("/docs")
+	docs.Get("/*", swagger.HandlerDefault)
 }
 
 func (s *Server) Start() <-chan os.Signal {

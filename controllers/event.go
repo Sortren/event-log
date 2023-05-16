@@ -19,6 +19,13 @@ func NewRestEventController(service services.IEventService) *RestEventController
 	return &RestEventController{eventService: service}
 }
 
+func (c *RestEventController) RegisterRoutes(router fiber.Router) {
+	eventsGroup := router.Group("/events")
+
+	eventsGroup.Post("/", c.CreateEvent)
+	eventsGroup.Get("/", c.GetEvents)
+}
+
 // CreateEvent godoc
 // @Summary      Create an event
 // @Description  Create an event and save it to the database
@@ -30,10 +37,10 @@ func NewRestEventController(service services.IEventService) *RestEventController
 // @Failure      404  {object}  fiber.Error
 // @Failure      500  {object}  fiber.Error
 // @Router       /events [post]
-func (ctr *RestEventController) CreateEvent(c *fiber.Ctx) error {
+func (c *RestEventController) CreateEvent(ctx *fiber.Ctx) error {
 	event := new(models.Event)
 
-	if err := c.BodyParser(event); err != nil {
+	if err := ctx.BodyParser(event); err != nil {
 		return fiber.ErrBadRequest
 	}
 
@@ -42,13 +49,13 @@ func (ctr *RestEventController) CreateEvent(c *fiber.Ctx) error {
 		return err
 	}
 
-	event, err := ctr.eventService.CreateEvent(event)
+	event, err := c.eventService.CreateEvent(event)
 
 	if err != nil {
 		return err
 	}
 
-	return c.JSON(event)
+	return ctx.JSON(event)
 }
 
 // GetEvents godoc
@@ -66,7 +73,7 @@ func (ctr *RestEventController) CreateEvent(c *fiber.Ctx) error {
 // @Failure      404  {object}  fiber.Error
 // @Failure      500  {object}  fiber.Error
 // @Router       /events [get]
-func (ctr *RestEventController) GetEvents(c *fiber.Ctx) error {
+func (c *RestEventController) GetEvents(ctx *fiber.Ctx) error {
 	type EventParams struct {
 		Type   string    `query:"type"`
 		Start  time.Time `query:"start"`
@@ -76,7 +83,7 @@ func (ctr *RestEventController) GetEvents(c *fiber.Ctx) error {
 	}
 
 	filters := &EventParams{}
-	if err := c.QueryParser(filters); err != nil {
+	if err := ctx.QueryParser(filters); err != nil {
 		return fiber.NewError(fiber.StatusBadRequest, "Required fields are not provided in the queryparams")
 	}
 
@@ -84,8 +91,8 @@ func (ctr *RestEventController) GetEvents(c *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusBadRequest, "Limit and Offset can't be negative")
 	}
 
-	events, err := ctr.eventService.GetEvents(
-		c.Context(),
+	events, err := c.eventService.GetEvents(
+		ctx.Context(),
 		filters.Start,
 		filters.End,
 		filters.Type,
@@ -97,5 +104,5 @@ func (ctr *RestEventController) GetEvents(c *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusInternalServerError, "Can't get events")
 	}
 
-	return c.JSON(events)
+	return ctx.JSON(events)
 }
