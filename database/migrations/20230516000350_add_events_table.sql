@@ -4,7 +4,7 @@
 CREATE TABLE events
 (
     id UUID NOT NULL PRIMARY KEY DEFAULT gen_random_uuid(),
-    created_at TIMESTAMP NOT NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT now(),
     description VARCHAR NOT NULL,
     type VARCHAR NOT NULL
 )
