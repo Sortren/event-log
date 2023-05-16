@@ -19,6 +19,11 @@
 
 ### How to build the service
 
+download deps to the local cache
+```
+go mod download
+```
+
 run docker-compose with a build switch
 
 ```
@@ -31,6 +36,8 @@ run migrations
 goose postgres "user=sortren password=sortren123 dbname=main sslmode=disable" up
 ```
 (same credentials as in .env file)
+
+restart event-log docker container
 
 ---
 
