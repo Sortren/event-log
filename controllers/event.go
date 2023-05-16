@@ -83,12 +83,21 @@ func (c *RestEventController) GetEvents(ctx *fiber.Ctx) error {
 	}
 
 	filters := &EventParams{}
+
+	var validationErrorMessage *ErrorMessage
+
 	if err := ctx.QueryParser(filters); err != nil {
-		return fiber.NewError(fiber.StatusBadRequest, "Required fields are not provided in the queryparams")
+		validationErrorMessage = &ErrorMessage{Message: "Required fields are not provided in the queryparams"}
 	}
 
 	if filters.Limit < 0 || filters.Offset < 0 {
-		return fiber.NewError(fiber.StatusBadRequest, "Limit and Offset can't be negative")
+		validationErrorMessage = &ErrorMessage{Message: "Limit and Offset can't be negative"}
+	}
+
+	if validationErrorMessage != nil {
+		return ctx.
+			Status(fiber.StatusBadRequest).
+			JSON(validationErrorMessage)
 	}
 
 	events, err := c.eventService.GetEvents(
@@ -100,8 +109,18 @@ func (c *RestEventController) GetEvents(ctx *fiber.Ctx) error {
 		filters.Offset,
 	)
 
+	if len(events) == 0 {
+		msg := ErrorMessage{Message: "Events with provided params not found"}
+		return ctx.
+			Status(fiber.StatusNotFound).
+			JSON(msg)
+	}
+
 	if err != nil {
-		return fiber.NewError(fiber.StatusInternalServerError, "Can't get events")
+		msg := ErrorMessage{Message: "Can't get events"}
+		return ctx.
+			Status(fiber.StatusInternalServerError).
+			JSON(msg)
 	}
 
 	return ctx.JSON(events)

@@ -8,3 +8,8 @@ import (
 type RestController interface {
 	RegisterRoutes(router fiber.Router)
 }
+
+type ErrorMessage struct {
+	Message string `json:"message,omitempty"`
+	Details string `json:"details,omitempty"`
+}

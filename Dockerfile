@@ -1,4 +1,4 @@
-FROM golang:1.18
+FROM golang:1.20
 
 WORKDIR /event-log
 
@@ -8,7 +8,7 @@ RUN go mod download && go mod tidy
 
 RUN go install github.com/swaggo/swag/cmd/swag@latest
 
-WORKDIR /event-log/src/cmd
+WORKDIR /event-log/cmd
 
 RUN swag init --parseDependency --parseInternal
 

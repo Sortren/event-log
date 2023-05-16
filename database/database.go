@@ -6,6 +6,9 @@ import (
 	"github.com/Sortren/event-log/pkg/config"
 	"github.com/uptrace/bun"
 	"github.com/uptrace/bun/dialect/pgdialect"
+	"github.com/uptrace/bun/extra/bundebug"
+
+	_ "github.com/uptrace/bun/driver/pgdriver"
 )
 
 func Connect(cfg config.Postgres) (*bun.DB, error) {
@@ -14,5 +17,7 @@ func Connect(cfg config.Postgres) (*bun.DB, error) {
 		return nil, fmt.Errorf("can't open database connection, err: %w", err)
 	}
 
-	return bun.NewDB(sqldb, pgdialect.New()), nil
+	db := bun.NewDB(sqldb, pgdialect.New())
+	db.AddQueryHook(bundebug.NewQueryHook(bundebug.WithVerbose(true)))
+	return db, nil
 }
