@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"fmt"
 	_ "net/http/httputil"
 	"time"
 
@@ -41,21 +42,43 @@ func (c *RestEventController) CreateEvent(ctx *fiber.Ctx) error {
 	event := new(models.Event)
 
 	if err := ctx.BodyParser(event); err != nil {
-		return fiber.ErrBadRequest
+		msg := &ErrorMessage{
+			Message: "can't bind request body",
+			Details: fmt.Sprintf("%s", err),
+		}
+
+		return ctx.
+			Status(fiber.StatusBadRequest).
+			JSON(msg)
 	}
 
-	validate := validator.New()
-	if err := validate.Struct(event); err != nil {
-		return err
+	if err := validator.New().Struct(event); err != nil {
+		msg := &ErrorMessage{
+			Message: "can't validate request body",
+			Details: fmt.Sprintf("%s", err),
+		}
+
+		return ctx.
+			Status(fiber.StatusBadRequest).
+			JSON(msg)
 	}
 
-	event, err := c.eventService.CreateEvent(event)
+	event, err := c.eventService.CreateEvent(ctx.Context(), event)
 
 	if err != nil {
-		return err
+		msg := &ErrorMessage{
+			Message: "can't create event",
+			Details: fmt.Sprintf("%s", err),
+		}
+
+		return ctx.
+			Status(fiber.StatusInternalServerError).
+			JSON(msg)
 	}
 
-	return ctx.JSON(event)
+	return ctx.
+		Status(fiber.StatusCreated).
+		JSON(event)
 }
 
 // GetEvents godoc
@@ -78,26 +101,32 @@ func (c *RestEventController) GetEvents(ctx *fiber.Ctx) error {
 		Type   string    `query:"type"`
 		Start  time.Time `query:"start"`
 		End    time.Time `query:"end"`
-		Limit  int       `query:"limit,required"`
-		Offset int       `query:"offset,required"`
+		Limit  int       `query:"limit,required" validate:"gt=0"`
+		Offset int       `query:"offset,required" validate:"gte=0"`
 	}
 
 	filters := &EventParams{}
 
-	var validationErrorMessage *ErrorMessage
-
 	if err := ctx.QueryParser(filters); err != nil {
-		validationErrorMessage = &ErrorMessage{Message: "Required fields are not provided in the queryparams"}
-	}
+		msg := &ErrorMessage{
+			Message: "required fields are not provided in the queryparams",
+			Details: fmt.Sprintf("%s", err),
+		}
 
-	if filters.Limit < 0 || filters.Offset < 0 {
-		validationErrorMessage = &ErrorMessage{Message: "Limit and Offset can't be negative"}
-	}
-
-	if validationErrorMessage != nil {
 		return ctx.
 			Status(fiber.StatusBadRequest).
-			JSON(validationErrorMessage)
+			JSON(msg)
+	}
+
+	if err := validator.New().Struct(filters); err != nil {
+		msg := &ErrorMessage{
+			Message: "can't validate queryparams, limit and offset can't be negative",
+			Details: fmt.Sprintf("%s", err),
+		}
+
+		return ctx.
+			Status(fiber.StatusBadRequest).
+			JSON(msg)
 	}
 
 	events, err := c.eventService.GetEvents(
@@ -110,14 +139,14 @@ func (c *RestEventController) GetEvents(ctx *fiber.Ctx) error {
 	)
 
 	if len(events) == 0 {
-		msg := ErrorMessage{Message: "Events with provided params not found"}
+		msg := ErrorMessage{Message: "events with provided params not found"}
 		return ctx.
 			Status(fiber.StatusNotFound).
 			JSON(msg)
 	}
 
 	if err != nil {
-		msg := ErrorMessage{Message: "Can't get events"}
+		msg := ErrorMessage{Message: "can't get events"}
 		return ctx.
 			Status(fiber.StatusInternalServerError).
 			JSON(msg)

@@ -10,7 +10,7 @@ import (
 
 type IEventService interface {
 	GetEvents(ctx context.Context, start time.Time, end time.Time, eventType string, limit int, offset int) ([]models.Event, error)
-	CreateEvent(event *models.Event) (*models.Event, error)
+	CreateEvent(ctx context.Context, event *models.Event) (*models.Event, error)
 }
 
 var _ IEventService = &EventService{}
@@ -41,12 +41,10 @@ func (e *EventService) GetEvents(ctx context.Context, start time.Time, end time.
 	return events, nil
 }
 
-func (e *EventService) CreateEvent(event *models.Event) (*models.Event, error) {
-	//db := database.DBConn
-	//
-	//db.Create(&event)
-	//
-	//log.Printf("Event[%s] (%s) added to the database", event.Type, event.Description)
+func (e *EventService) CreateEvent(ctx context.Context, event *models.Event) (*models.Event, error) {
+	if err := e.repo.Save(ctx, event); err != nil {
+		return nil, fmt.Errorf("can't save event to the database")
+	}
 
 	return event, nil
 }
