@@ -12,6 +12,7 @@ type Postgres struct {
 	postgresPort     string
 	postgresHost     string
 	sslMode          string
+	debugMode        string
 }
 
 func NewPostgres() Postgres {
@@ -22,6 +23,7 @@ func NewPostgres() Postgres {
 		postgresPort:     os.Getenv("POSTGRES_PORT"),
 		postgresHost:     os.Getenv("POSTGRES_HOST"),
 		sslMode:          os.Getenv("SSL_MODE"),
+		debugMode:        os.Getenv("DEBUG_MODE"),
 	}
 }
 
@@ -34,4 +36,11 @@ func (p Postgres) Dsn() string {
 		p.postgresDb,
 		p.sslMode,
 	)
+}
+
+func (p Postgres) DebugMode() bool {
+	if p.debugMode == "1" {
+		return true
+	}
+	return false
 }

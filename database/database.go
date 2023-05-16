@@ -6,9 +6,8 @@ import (
 	"github.com/Sortren/event-log/pkg/config"
 	"github.com/uptrace/bun"
 	"github.com/uptrace/bun/dialect/pgdialect"
-	"github.com/uptrace/bun/extra/bundebug"
-
 	_ "github.com/uptrace/bun/driver/pgdriver"
+	"github.com/uptrace/bun/extra/bundebug"
 )
 
 func Connect(cfg config.Postgres) (*bun.DB, error) {
@@ -18,6 +17,10 @@ func Connect(cfg config.Postgres) (*bun.DB, error) {
 	}
 
 	db := bun.NewDB(sqldb, pgdialect.New())
-	db.AddQueryHook(bundebug.NewQueryHook(bundebug.WithVerbose(true)))
+
+	if cfg.DebugMode() {
+		db.AddQueryHook(bundebug.NewQueryHook(bundebug.WithVerbose(true)))
+	}
+
 	return db, nil
 }
