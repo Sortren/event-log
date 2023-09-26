@@ -1,0 +1,95 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: event-log
+  namespace: default
+data:
+  POSTGRES_DB: "main"
+  POSTGRES_USER: "sortren"
+  POSTGRES_PASSWORD: "sortren123"
+  POSTGRES_PORT: "5432"
+  POSTGRES_HOST: "db"
+  SSL_MODE: "disable"
+  TIMEZONE: "Europe/Warsaw"
+  API_SERVER_URL: ":8080"
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: postgres
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: postgres
+  template:
+    metadata:
+      labels:
+        app: postgres
+    spec:
+      containers:
+        - name: postgres
+          image: postgres:14
+          ports:
+            - containerPort: 5432
+          envFrom:
+            - configMapRef:
+                name: event-log
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: event-log
+  labels:
+    app: event-log
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: event-log
+  template:
+    metadata:
+      labels:
+        app: event-log
+    spec:
+      containers:
+        - name: event-log
+          image: event-log:1.0
+          imagePullPolicy: Never
+          command:
+            - "/bin/server"
+          envFrom:
+            - configMapRef:
+                name: event-log
+      restartPolicy: Always
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgres
+spec:
+  type: LoadBalancer
+  selector:
+    app: postgres
+  ports:
+    - port: 5432
+
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: ingress
+spec:
+  rules:
+    - http:
+        paths:
+          - pathType: Prefix
+            path: /
+            backend:
+              service:
+                name: event-log
+                port:
+                  number: 8080
